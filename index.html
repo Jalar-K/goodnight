@@ -12,14 +12,15 @@ body{background:radial-gradient(ellipse at 50% 120%,#2a2350 0%,#0d1030 45%,#0506
 body.done #glow{opacity:1}
 .dot{position:absolute;background:#fff;border-radius:50%;animation:tw 3s ease-in-out infinite}
 @keyframes tw{0%,100%{opacity:.15}50%{opacity:1}}
+#greet{position:fixed;top:30px;left:0;right:120px;text-align:center;font-size:17px;font-style:italic;opacity:.85;padding:0 16px;transition:opacity 1s}
 #moon{position:absolute;top:28px;right:28px;width:84px;height:84px;border-radius:50%;background:rgba(255,248,220,.1);border:1px solid rgba(255,248,220,.35);overflow:hidden}
-#fill{position:absolute;bottom:0;left:0;right:0;height:0;background:#fff3c4;transition:height .6s ease}
+#fill{position:absolute;bottom:0;left:0;right:0;height:0;background:#fff3c4;transition:height .5s ease}
 #moon.full{box-shadow:0 0 60px rgba(255,243,196,.6)}
 #count{position:absolute;top:122px;right:28px;width:84px;text-align:center;font-size:14px;opacity:.7}
-#msg{position:absolute;left:0;right:0;bottom:12%;text-align:center;padding:0 24px;font-size:20px;font-style:italic;opacity:0;transition:opacity .8s;pointer-events:none}
+#msg{position:absolute;left:0;right:0;bottom:12%;text-align:center;padding:0 24px;font-size:20px;font-style:italic;opacity:0;transition:opacity .6s;pointer-events:none}
 #msg.show{opacity:1}
-.star{position:absolute;top:-60px;width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:34px;color:#ffe9a8;text-shadow:0 0 12px #ffd76a,0 0 26px #ffb84d;cursor:pointer;animation:fall linear forwards}
-@keyframes fall{to{transform:translateY(calc(100vh + 120px)) rotate(200deg)}}
+.star{position:absolute;top:-60px;width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#ffe9a8;text-shadow:0 0 12px #ffd76a,0 0 26px #ffb84d;cursor:pointer;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(calc(100vh + 120px)) rotate(220deg)}}
 .burst{position:absolute;width:6px;height:6px;border-radius:50%;background:#ffe9a8;box-shadow:0 0 8px #ffd76a;pointer-events:none;animation:pop .7s ease-out forwards}
 @keyframes pop{to{transform:translate(var(--x),var(--y)) scale(.2);opacity:0}}
 .card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(88vw,380px);text-align:center;padding:30px 24px;border-radius:22px;background:rgba(20,18,50,.65);border:1px solid rgba(255,255,255,.15);transition:opacity 1.2s}
@@ -39,18 +40,19 @@ textarea::placeholder{color:rgba(243,238,252,.45)}
 </head>
 <body>
 <div id="glow"></div>
+<div id="greet"></div>
 <div id="moon"><div id="fill"></div></div>
 <div id="count"></div>
 <div id="msg"></div>
 
 <div id="start" class="card">
   <h1>Hey <span class="name"></span></h1>
-  <p>Before you sleep, catch 10 falling stars for me. Tap them as they drift down.</p>
+  <p>Before you sleep, catch 12 falling stars for me. Tap them as they drift down.</p>
   <button id="go">Start</button>
 </div>
 
 <div id="end" class="card hidden">
-  <h1>Good night, <span class="name"></span></h1>
+  <h1 id="endtitle"></h1>
   <p id="note"></p>
   <p class="from" id="from"></p>
   <button id="wish">Make a wish</button>
@@ -64,8 +66,9 @@ textarea::placeholder{color:rgba(243,238,252,.45)}
 // ===== Change these =====
 const HER_NAME = "Lizzie";
 const FROM     = "Kendrick";
-const NOTE     = "Sweet Dreams. Rest well.";
-const PHONE    = "256760506463"; // 0760 506 463 in international format, no + or spaces
+const PHONE    = "256760506463"; // international format, no + or spaces
+
+// 12 stars = 12 messages
 const LINES = [
   "You made it through today. That's enough.",
   "Let your shoulders drop.",
@@ -75,18 +78,33 @@ const LINES = [
   "Breathe in slowly... and out.",
   "The stars came out just for you tonight.",
   "You don't have to earn rest.",
-  "Life is Precious.",
+  "Life is precious.",
+  "You are safe, and the day is over.",
+  "I'm really glad you're you.",
   "Time to close your eyes."
 ];
+
+// Greeting + card text change with the hour on HER phone.
+function moodFor(h) {
+  if (h >= 20 || h < 1) return { greet:"Good night, "+HER_NAME+" \uD83C\uDF19", title:"Good night, "+HER_NAME, note:"Sweet dreams. Rest well." };
+  if (h >= 1  && h < 5)  return { greet:"Still up? I thought you were asleep\u2026", title:"You should be sleeping, "+HER_NAME, note:"It's late. Put the phone down and rest, love." };
+  if (h >= 5  && h < 6)  return { greet:"You're up early\u2026", title:"Up before the sun, "+HER_NAME+"?", note:"Go back to bed if you can. The day will wait." };
+  if (h >= 6  && h < 11) return { greet:"Good morning, sunshine \u2600\uFE0F", title:"Good morning, "+HER_NAME, note:"Hope today is gentle to you. Have a good one." };
+  if (h >= 11 && h < 16) return { greet:"Hey "+HER_NAME+", hope your day's going well", title:"Thinking of you, "+HER_NAME, note:"Just a little hello in the middle of your day." };
+  return { greet:"Good evening, "+HER_NAME, title:"Good evening, "+HER_NAME, note:"Winding down? Take it easy tonight." };
+}
 // ========================
 
 const GOAL = LINES.length;
 const $ = id => document.getElementById(id);
+const MOOD = moodFor(new Date().getHours());
 document.querySelectorAll('.name').forEach(e => e.textContent = HER_NAME);
-$('note').textContent = NOTE;
-$('from').textContent = FROM;
+$('greet').textContent = MOOD.greet;
+$('endtitle').textContent = MOOD.title;
+$('note').textContent = MOOD.note;
+$('from').textContent = "\u2014 " + FROM;
 
-for (let i = 0; i < 140; i++) {
+for (let i = 0; i < 150; i++) {
   const d = document.createElement('div');
   const s = 1 + Math.random() * 1.8;
   d.className = 'dot';
@@ -100,17 +118,17 @@ $('go').onclick = () => {
   $('start').classList.add('hidden');
   playing = true;
   updateCount();
-  spawn();
-  timer = setInterval(spawn, 1100);
+  for (let i = 0; i < 3; i++) setTimeout(spawn, i * 250); // start with a few
+  timer = setInterval(spawn, 600); // denser
 };
 
 function spawn() {
   if (!playing) return;
   const s = document.createElement('div');
   s.className = 'star';
-  s.textContent = '★';
-  s.style.left = Math.random() * (innerWidth - 60) + 'px';
-  s.style.animationDuration = (6 + Math.random() * 3) + 's';
+  s.textContent = '\u2605';
+  s.style.left = Math.random() * (innerWidth - 56) + 'px';
+  s.style.animationDuration = (3.2 + Math.random() * 2) + 's'; // faster
   s.addEventListener('pointerdown', () => catchStar(s));
   s.addEventListener('animationend', () => s.remove());
   document.body.appendChild(s);
@@ -124,7 +142,7 @@ function catchStar(s) {
   caught++;
   $('fill').style.height = (caught / GOAL * 100) + '%';
   updateCount();
-  say(LINES[caught - 1]);
+  say(LINES[(caught - 1) % LINES.length]);
   if (caught >= GOAL) finish();
 }
 
@@ -147,7 +165,7 @@ function say(text) {
   m.textContent = text;
   m.classList.add('show');
   clearTimeout(msgTimer);
-  msgTimer = setTimeout(() => m.classList.remove('show'), 3200);
+  msgTimer = setTimeout(() => m.classList.remove('show'), 2600);
 }
 
 function updateCount() { $('count').textContent = caught + ' / ' + GOAL; }
@@ -165,8 +183,9 @@ function finish() {
   setTimeout(() => {
     $('msg').classList.remove('show');
     $('count').textContent = '';
+    $('greet').style.opacity = 0;
     $('end').classList.remove('hidden');
-  }, 3600);
+  }, 3200);
 }
 
 $('wish').onclick = () => {
